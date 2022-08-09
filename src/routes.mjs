@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { loginValidations, registerValidations } from "./middleware/authMiddlewares.mjs";
+import { createTaskValidations } from "./middleware/taskMiddlewares.mjs";
 import { taskModel } from "./models/taskModel.mjs";
 import { userModel } from "./models/userModel.mjs";
 import { generateJWT, verifyToken } from "./utils/jwt.mjs";
@@ -6,7 +8,7 @@ import { generateJWT, verifyToken } from "./utils/jwt.mjs";
 const router = Router();
 
 // auth
-router.post("/login", async (req, res) => {
+router.post("/login", loginValidations, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -31,14 +33,14 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", registerValidations, async (req, res) => {
   try {
     const { name, lastName, email, password } = req.body;
 
     const user = await userModel.findOne({ email });
 
     if (user) {
-      return res.status(404).json({
+      return res.status(400).json({
         error: "El correo ya está registrado",
       });
     }
@@ -49,6 +51,24 @@ router.post("/register", async (req, res) => {
     res.json({
       message: "Usuario creado con éxito",
     });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
+
+router.delete("/delete/:email",  async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const user = await userModel.findOneAndDelete({ email });
+
+    res.json({
+      message: "Usuario eliminado",
+      deleted: Boolean(user)
+    });
+
   } catch (error) {
     res.status(500).json({
       error: "SERVER_ERROR",
@@ -74,7 +94,7 @@ router.get("/task", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/task", verifyToken, async (req, res) => {
+router.post("/task", verifyToken, createTaskValidations, async (req, res) => {
   try {
     const { name, date, priority, userId } = req.body;
 
