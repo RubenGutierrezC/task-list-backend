@@ -1,6 +1,7 @@
 import { Router } from "express";
+import { taskModel } from "./models/taskModel.mjs";
 import { userModel } from "./models/userModel.mjs";
-import { generateJWT } from "./utils/jwt.mjs";
+import { generateJWT, verifyToken } from "./utils/jwt.mjs";
 
 const router = Router();
 
@@ -24,7 +25,6 @@ router.post("/login", async (req, res) => {
       token,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({
       error: "SERVER_ERROR",
     });
@@ -57,12 +57,85 @@ router.post("/register", async (req, res) => {
 });
 
 // task
-router.get("/task", (req, res) => {});
+router.get("/task", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.body;
 
-router.post("/task", (req, res) => {});
+    const task = await taskModel.find({ userId });
 
-router.put("/task/:id", () => {});
+    res.json({
+      message: "ok",
+      data: task,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
 
-router.delete("/task/:id", () => {});
+router.post("/task", verifyToken, async (req, res) => {
+  try {
+    const { name, date, priority, userId } = req.body;
+
+    const task = await taskModel.create({ name, date, priority, userId });
+    const newTask = await task.save();
+
+    res.json({
+      message: "ok",
+      data: newTask,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
+
+router.put("/task/:id", verifyToken, () => {});
+
+router.delete("/task/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const task = await taskModel.findOneAndDelete({ _id: id });
+
+    if (!task) {
+      return res.status(404).json({
+        error: "La tarea no existe",
+      });
+    }
+
+    res.json({
+      message: "ok",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
+
+router.delete("/task/delete/all", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const task = await taskModel.deleteMany({ userId });
+
+    if (task.deletedCount === 0) {
+      return res.status(404).json({
+        error: "No hay tareas para eliminar",
+      });
+    }
+
+    res.json({
+      message: "ok",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
 
 export default router;
