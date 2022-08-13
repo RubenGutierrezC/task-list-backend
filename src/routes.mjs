@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { loginValidations, registerValidations } from "./middleware/authMiddlewares.mjs";
+import {
+  loginValidations,
+  registerValidations,
+} from "./middleware/authMiddlewares.mjs";
 import { createTaskValidations } from "./middleware/taskMiddlewares.mjs";
 import { taskModel } from "./models/taskModel.mjs";
 import { userModel } from "./models/userModel.mjs";
@@ -58,7 +61,7 @@ router.post("/register", registerValidations, async (req, res) => {
   }
 });
 
-router.delete("/delete/:email",  async (req, res) => {
+router.delete("/delete/:email", async (req, res) => {
   try {
     const { email } = req.params;
 
@@ -66,9 +69,8 @@ router.delete("/delete/:email",  async (req, res) => {
 
     res.json({
       message: "Usuario eliminado",
-      deleted: Boolean(user)
+      deleted: Boolean(user),
     });
-
   } catch (error) {
     res.status(500).json({
       error: "SERVER_ERROR",
@@ -112,7 +114,35 @@ router.post("/task", verifyToken, createTaskValidations, async (req, res) => {
   }
 });
 
-router.put("/task/:id", verifyToken, () => {});
+router.put("/task/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, date, priority } = req.body;
+
+    const task = await taskModel.findOneAndDelete({ _id: id });
+
+    if (!task) {
+      return res.status(404).json({
+        error: "La tarea no existe",
+      });
+    }
+
+    const modifiedTask = await taskModel.findByIdAndUpdate(id, {
+      name,
+      date,
+      priority,
+    });
+
+    res.json({
+      message: "ok",
+      data: modifiedTask,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "SERVER_ERROR",
+    });
+  }
+});
 
 router.delete("/task/:id", verifyToken, async (req, res) => {
   try {

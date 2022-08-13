@@ -1,6 +1,13 @@
 import components from "./components.mjs";
 import { post } from "./paths/loginPath.mjs";
 import { register } from "./paths/registerPath.mjs";
+import {
+  getTasks,
+  registerTask,
+  deleteAllTask,
+  deleteOneTask,
+  updateTask,
+} from "./paths/taskPath.mjs";
 
 const docs = {
   openapi: "3.0.3", // present supported openapi version
@@ -10,7 +17,7 @@ const docs = {
     version: "1.0.0", // version number
     contact: {
       name: "Rubén Gutiérrez", // your name
-      email: "rubdeivis@gmail.com.com", // your email
+      email: "rubdeivis@gmail.com", // your email
     },
   },
   components,
@@ -22,15 +29,15 @@ const docs = {
       post: register,
     },
     "/task": {
-      get: {},
-      post: {},
+      get: getTasks,
+      post: registerTask,
     },
     "/task/:id": {
-      put: {},
-      delete: {},
+      put: updateTask,
+      delete: deleteOneTask,
     },
     "/task/delete/all": {
-      delete: {},
+      delete: deleteAllTask,
     },
   },
 };
