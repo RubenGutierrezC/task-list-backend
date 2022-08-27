@@ -18,7 +18,6 @@ app.set("port", port);
 app.listen(app.get("port"), async () => {
   try {
     await initMongoDB();
-
     console.log("server running in PORT:", app.get("port"));
   } catch (error) {
     console.warn(error);
